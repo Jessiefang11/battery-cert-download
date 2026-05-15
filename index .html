@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>电池文件查询系统 - 联想物料PN文件库</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .header h1 span {
+            background: #ffb347;
+            font-size: 0.9rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            color: #1e2f3a;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .search-box {
+            padding: 2rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .warning-banner {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            color: #92400e;
+        }
+
+        .login-helper {
+            background: #dbeafe;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn-login {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-login:hover {
+            background: #2563eb;
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+        }
+
+        .status-online {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .input-field {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .input-field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .year-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .year-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+
+        .year-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .year-selector select {
+            flex: 2;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .year-selector input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .btn-query {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-query:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-area {
+            padding: 2rem;
+        }
+
+        .info-bar {
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .pn-info {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1e293b;
+        }
+
+        .year-info {
+            background: #e2e8f0;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-table th {
+            background: #e2e8f0;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .file-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        .file-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .download-link {
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            margin: 0.25rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        .download-link:hover {
+            background: #059669;
+        }
+
+        .proxy-selector {
+            background: #f1f5f9;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+        }
+
+        .proxy-selector select {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+
+        .cors-note {
+            margin-top: 1rem;
+            background: #e0f2fe;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            color: #0369a1;
+            text-align: center;
+        }
+
+        @media (max-width: 700px) {
+            .form-group {
+                flex-direction: column;
+            }
+            .file-table th, .file-table td {
+                padding: 0.75rem;
+            }
+            .login-helper {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>
+                📦 电池文件查询系统
+                <span>CORS代理版</span>
+            </h1>
+            <p>空运证书 · 海运证书 · MSDS · UN38.3 · 跌落报告 · 堆码报告</p>
+        </div>
+
+        <div class="search-box">
+            <div class="warning-banner">
+                ⚠️ <strong>跨域解决方案：</strong> 本版本已集成 CORS 代理服务，可以绕过浏览器的跨域限制。<br>
+                如果某个代理失效，可以在下方切换其他代理服务器。
+            </div>
+
+            <div class="login-helper" id="loginHelper">
+                <span>🔐 网盘账号：<strong>fru001</strong> | 密码已内置</span>
+                <button class="btn-login" id="loginBtn">🔑 打开网盘登录页面</button>
+                <button class="btn-login" id="markLoginBtn" style="background: #10b981;">✓ 我已登录（标记）</button>
+                <span id="loginStatus" class="status-badge status-offline">⚪ 未标记登录</span>
+            </div>
+
+            <div class="proxy-selector">
+                <span>🔄 CORS 代理服务器：</span>
+                <select id="proxySelect">
+                    <option value="https://cors-anywhere.herokuapp.com/">CORS Anywhere（推荐）</option>
+                    <option value="https://api.allorigins.win/raw?url=">All Origins</option>
+                    <option value="https://corsproxy.io/?">CORS Proxy IO</option>
+                    <option value="https://proxy.cors.sh/">CORS.sh</option>
+                    <option value="none">不使用代理（直连）</option>
+                </select>
+                <span style="font-size: 0.75rem; color: #6b7280;">如果下载失败，尝试切换其他代理</span>
+            </div>
+
+            <div class="form-group">
+                <div class="input-field">
+                    <label>📇 物料 PN 号</label>
+                    <input type="text" id="pnInput" placeholder="例: 5B10W12345, FRU-ABC123" value="5B10W12345">
+                </div>
+                <div class="year-group">
+                    <label>📅 年份 (支持2026-2030+)</label>
+                    <div class="year-selector">
+                        <select id="yearSelect">
+                            <option value="2026" selected>2026</option>
+                            <option value="2027">2027</option>
+                            <option value="2028">2028</option>
+                            <option value="2029">2029</option>
+                            <option value="2030">2030</option>
+                            <option value="custom">自定义年份</option>
+                        </select>
+                        <input type="text" id="customYear" placeholder="例如 2031" style="display: none;" maxlength="4">
+                    </div>
+                </div>
+                <button class="btn-query" id="searchBtn">🔍 查询文件</button>
+            </div>
+        </div>
+
+        <div class="result-area">
+            <div class="info-bar">
+                <span class="pn-info" id="pnDisplay">⚡ 未查询</span>
+                <span class="year-info" id="yearDisplay">📁 —</span>
+            </div>
+            <div id="tableContainer">
+                <div class="loading">✨ 请输入物料PN号并点击查询<br>📌 系统将自动匹配6类文件并生成带CORS代理的下载链接</div>
+            </div>
+            <div class="cors-note">
+                💡 <strong>CORS代理说明：</strong> 代理服务器会转发您的下载请求，解决跨域问题。<br>
+                🔧 首次使用某些代理（如CORS Anywhere）可能需要点击“请求临时访问”，按提示操作即可。
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // 真实网盘配置
+    // ============================================================
+    const NAS_CONFIG = {
+        baseUrl: 'https://hic-lenovo.cn5.quickconnect.cn',
+        username: 'fru001',
+        password: 'fI*jEe'
+    };
+
+    // 文件类别及关键词匹配规则
+    const FILE_CATEGORIES = [
+        { name: "✈️ 空运证书", key: "air", keywords: ["空运鉴定书", "空运", "空運", "Air", "AIR"] },
+        { name: "🚢 海运证书", key: "sea", keywords: ["海运鉴定书", "海运", "sea", "海運", "Sea"] },
+        { name: "📄 MSDS", key: "msds", keywords: ["MSDS", "SDS", "msds"] },
+        { name: "⚠️ UN38.3", key: "un38", keywords: ["UN38.3", "UN", "测试概要", "UN报告", "UN38"] },
+        { name: "📉 1.2米跌落报告", key: "drop12", keywords: ["跌落报告", "1.2M", "1.2米", "跌落"] },
+        { name: "📦 3米堆码报告", key: "stack3", keywords: ["3M", "堆碼", "堆码报告", "3米", "堆码"] }
+    ];
+
+    // 存储用户是否标记已登录
+    let isNasLoggedIn = false;
+
+    // 获取当前选择的代理服务器URL
+    function getCurrentProxy() {
+        const select = document.getElementById('proxySelect');
+        const value = select.value;
+        if (value === 'none') return null;
+        return value;
+    }
+
+    // 构建带代理的下载URL
+    function buildProxiedDownloadUrl(originalUrl) {
+        const proxyUrl = getCurrentProxy();
+        if (!proxyUrl) return originalUrl;
+        
+        // 不同代理的URL拼接方式不同
+        if (proxyUrl.includes('allorigins')) {
+            // allorigins 特殊格式
+            return `${proxyUrl}${encodeURIComponent(originalUrl)}`;
+        } else {
+            // 通用格式：代理URL + 目标URL
+            return `${proxyUrl}${originalUrl}`;
+        }
+    }
+
+    // 构建真实的文件下载URL（原始URL）
+    function buildRealDownloadUrl(pn, year, fileName) {
+        return `${NAS_CONFIG.baseUrl}/${year}/${pn}/${encodeURIComponent(fileName)}`;
+    }
+
+    // 根据PN生成预期的文件名列表（匹配网盘可能的命名规范）
+    function getExpectedFileNames(pn, category) {
+        const namePatterns = {
+            air: [
+                `${pn}_空运鉴定书.pdf`,
+                `${pn}_空运.pdf`,
+                `${pn}_Air.pdf`,
+                `Air_${pn}.pdf`,
+                `${pn}_空运证书.pdf`
+            ],
+            sea: [
+                `${pn}_海运鉴定书.pdf`,
+                `${pn}_海运.pdf`,
+                `${pn}_Sea.pdf`,
+                `Sea_${pn}.pdf`,
+                `${pn}_海运证书.pdf`
+            ],
+            msds: [
+                `${pn}_MSDS.pdf`,
+                `${pn}_SDS.pdf`,
+                `MSDS_${pn}.pdf`,
+                `${pn}_MSDS_SDS.pdf`
+            ],
+            un38: [
+                `${pn}_UN38.3.pdf`,
+                `${pn}_UN报告.pdf`,
+                `${pn}_测试概要.pdf`,
+                `UN38.3_${pn}.pdf`,
+                `${pn}_UN38.pdf`
+            ],
+            drop12: [
+                `${pn}_1.2米跌落报告.pdf`,
+                `${pn}_跌落报告.pdf`,
+                `Drop_${pn}.pdf`,
+                `${pn}_跌落测试.pdf`
+            ],
+            stack3: [
+                `${pn}_3米堆码报告.pdf`,
+                `${pn}_堆码报告.pdf`,
+                `Stack_${pn}.pdf`,
+                `${pn}_3M堆码.pdf`
+            ]
+        };
+        return namePatterns[category.key] || [`${pn}_${category.name}.pdf`];
+    }
+
+    // 打开网盘登录页面
+    function loginToNAS() {
+        const win = window.open(NAS_CONFIG.baseUrl, '_blank');
+        if (win) {
+            setTimeout(() => {
+                alert(`请在新打开的窗口中登录网盘：
+账号：${NAS_CONFIG.username}
+密码：${NAS_CONFIG.password}
+
+登录成功后，关闭该窗口，返回此页面，点击“我已登录”按钮。`);
+            }, 500);
+        } else {
+            alert('请允许弹出窗口，或手动打开链接登录：' + NAS_CONFIG.baseUrl);
+        }
+    }
+
+    // 更新登录状态显示
+    function updateLoginStatus() {
+        const statusSpan = document.getElementById('loginStatus');
+        if (isNasLoggedIn) {
+            statusSpan.innerHTML = '✅ 已标记登录（可下载）';
+            statusSpan.className = 'status-badge status-online';
+        } else {
+            statusSpan.innerHTML = '⚪ 未标记登录（请先登录网盘）';
+            statusSpan.className = 'status-badge status-offline';
+        }
+    }
+
+    // 执行查询（生成带代理的下载链接）
+    async function performQuery() {
+        const pn = document.getElementById('pnInput').value.trim();
+        const year = getSelectedYear();
+        
+        if (!pn) {
+            alert('请输入物料PN号');
+            return;
+        }
+        
+        // 更新显示
+        document.getElementById('pnDisplay').innerHTML = `🔖 PN: ${pn.toUpperCase()}`;
+        document.getElementById('yearDisplay').innerHTML = `📁 年份: ${year}`;
+        
+        // 显示加载状态
+        const container = document.getElementById('tableContainer');
+        container.innerHTML = '<div class="loading">⏳ 正在生成下载链接...</div>';
+        
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // 获取当前代理信息
+        const proxyUrl = getCurrentProxy();
+        const proxyName = proxyUrl ? proxyUrl.split('//')[1]?.split('/')[0] || '自定义代理' : '直连模式';
+        
+        // 构建结果表格
+        let html = `<div style="margin-bottom: 1rem; font-size: 0.8rem; color: #6b7280;">
+                    当前代理：<strong>${proxyName}</strong> | 
+                    下载前请确认已标记登录状态
+                   </div>`;
+        
+        html += `<table class="file-table">
+            <thead>
+                <tr><th style="width: 25%">文件类型</th><th style="width: 45%">候选文件</th><th style="width: 30%">操作</th></tr>
+            </thead>
+            <tbody>`;
+        
+        for (const category of FILE_CATEGORIES) {
+            const fileNames = getExpectedFileNames(pn, category);
+            
+            html += `<tr>
+                <td style="font-weight: 600; vertical-align: middle;">${category.name}</td>`;
+            
+            // 候选文件名列表
+            html += `<td style="font-size: 0.8rem;">`;
+            fileNames.forEach((name, idx) => {
+                html += `<div style="margin: 4px 0; color: #4b5563;">📄 ${name}</div>`;
+            });
+            html += `</td>`;
+            
+            // 下载按钮
+            html += `<td>`;
+            fileNames.forEach((name, idx) => {
+                const originalUrl = buildRealDownloadUrl(pn, year, name);
+                const proxiedUrl = buildProxiedDownloadUrl(originalUrl);
+                html += `<button class="download-link" onclick="downloadFile('${proxiedUrl.replace(/'/g, "\\'")}', '${name.replace(/'/g, "\\'")}')">
+                            📥 下载 ${idx === 0 ? '（推荐）' : `方案${idx + 1}`}
+                        </button><br>`;
+            });
+            html += `<div style="font-size: 0.7rem; color: #6b7280; margin-top: 6px;">
+                        💡 如果第一个无效，请尝试其他候选文件名
+                     </div>`;
+            html += `</td>
+            </tr>`;
+        }
+        
+        html += `</tbody>
+        </table>`;
+        
+        html += `<div style="margin-top: 1rem; background: #f1f5f9; padding: 0.75rem; border-radius: 0.5rem;">
+                    <details>
+                        <summary style="cursor: pointer; font-weight: 600;">📖 使用说明（点击展开）</summary>
+                        <div style="margin-top: 0.5rem; font-size: 0.8rem;">
+                            1️⃣ 首次使用请点击上方“打开网盘登录页面”完成登录（账号密码已自动填充）<br>
+                            2️⃣ 登录成功后，点击“我已登录”按钮标记状态<br>
+                            3️⃣ 如果下载失败，请尝试切换其他 CORS 代理服务器<br>
+                            4️⃣ 如果所有候选文件名都无法下载，说明网盘中的实际文件名与预期不符<br>
+                            5️⃣ 您可以根据实际文件名修改上方的候选文件名规则
+                        </div>
+                    </details>
+                </div>`;
+        
+        container.innerHTML = html;
+    }
+    
+    // 下载文件（在新标签页打开）
+    function downloadFile(url, fileName) {
+        if (!isNasLoggedIn) {
+            if (confirm('请先点击“打开网盘登录页面”完成登录，并标记“我已登录”后再下载。\n\n是否现在去登录？')) {
+                loginToNAS();
+            }
+            return;
+        }
+        
+        // 在新标签页打开下载链接
+        window.open(url, '_blank');
+        
+        // 可选：显示提示
+        setTimeout(() => {
+            console.log(`正在下载: ${fileName}`);
+        }, 100);
+    }
+
+    // 获取选中年份
+    function getSelectedYear() {
+        const select = document.getElementById('yearSelect');
+        const customInput = document.getElementById('customYear');
+        
+        if (select.value === 'custom') {
+            let year = customInput.value.trim();
+            if (/^\d{4}$/.test(year)) {
+                return year;
+            }
+            return '2026';
+        }
+        return select.value;
+    }
+
+    // 初始化UI交互
+    function init() {
+        const yearSelect = document.getElementById('yearSelect');
+        const customYear = document.getElementById('customYear');
+        const searchBtn = document.getElementById('searchBtn');
+        const loginBtn = document.getElementById('loginBtn');
+        const markLoginBtn = document.getElementById('markLoginBtn');
+        const pnInput = document.getElementById('pnInput');
+        
+        // 年份选择联动
+        yearSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customYear.style.display = 'inline-block';
+                customYear.focus();
+            } else {
+                customYear.style.display = 'none';
+                document.getElementById('yearDisplay').innerHTML = `📁 年份: ${this.value}`;
+            }
+        });
+        
+        // 登录按钮
+        loginBtn.addEventListener('click', loginToNAS);
+        
+        // 标记已登录按钮
+        markLoginBtn.addEventListener('click', () => {
+            isNasLoggedIn = true;
+            updateLoginStatus();
+            alert('已标记为登录状态，现在可以尝试下载文件了。');
+        });
+        
+        // 回车查询
+        pnInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performQuery();
+            }
+        });
+        
+        customYear.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performQuery();
+            }
+        });
+        
+        // 查询按钮
+        searchBtn.addEventListener('click', performQuery);
+        
+        // 代理切换时重新查询（可选）
+        const proxySelect = document.getElementById('proxySelect');
+        proxySelect.addEventListener('change', () => {
+            if (document.getElementById('tableContainer').innerHTML !== '<div class="loading">✨ 请输入物料PN号并点击查询<br>📌 系统将自动匹配6类文件并生成带CORS代理的下载链接</div>') {
+                performQuery();
+            }
+        });
+        
+        updateLoginStatus();
+        
+        // 默认执行一次查询
+        setTimeout(() => {
+            performQuery();
+        }, 300);
+    }
+    
+    // 启动
+    init();
+</script>
+</body>
+</html>
